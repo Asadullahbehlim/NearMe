@@ -10,9 +10,11 @@ import MapKit
 
 class ViewController: UIViewController {
 
+    var locationManager: CLLocationManager?
+    
     lazy var mapView: MKMapView = {
         let map = MKMapView()
-      //  map.showsUserLocation = true
+       map.showsUserLocation = true
         map.translatesAutoresizingMaskIntoConstraints = false
         return map
     }()
@@ -33,6 +35,12 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        // Initialize Location Manager
+        locationManager = CLLocationManager()
+        locationManager?.delegate = self
+        locationManager?.requestWhenInUseAuthorization()
+        locationManager?.requestAlwaysAuthorization()
+        locationManager?.requestLocation()
 
     }
    private func setupUI() {
@@ -54,7 +62,39 @@ class ViewController: UIViewController {
        searchTextField.returnKeyType = .go
        
     }
+    
+    private func checkLocationAuthorization() {
+        guard let locationManager = locationManager,
+              let location = locationManager.location
+        else { return }
+        switch locationManager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            let region = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
+            mapView.setRegion(region, animated: true)
+        case .denied:
+            print("Location services has been denied")
+        case .notDetermined, .restricted:
+            print("Location cannot be determined or may be restricted")
+        @unknown default:
+            print("Unknown error. Unable to get location")
+        }
+        
+    }
 
 
+}
+
+extension ViewController: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        checkLocationAuthorization()
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print(error)
+    }
 }
 

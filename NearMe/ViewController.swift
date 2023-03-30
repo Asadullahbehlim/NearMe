@@ -4,7 +4,7 @@
 //
 //  Created by Asadullah Behlim on 27/03/23.
 //
-
+import Foundation
 import UIKit
 import MapKit
 
@@ -23,6 +23,7 @@ class ViewController: UIViewController {
         let searchTextField = UITextField()
         searchTextField.backgroundColor = UIColor.white
         searchTextField.placeholder = "Search"
+        searchTextField.delegate = self
         searchTextField.clipsToBounds = true
         searchTextField.layer.cornerRadius = 10
         searchTextField.leftView = UIView(frame: CGRect(x: 10, y: 10, width: 10, height: 10))  // For spacing In Text Typing
@@ -69,7 +70,7 @@ class ViewController: UIViewController {
         else { return }
         switch locationManager.authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
-            let region = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 1000, longitudinalMeters: 1000)
+            let region = MKCoordinateRegion(center: location.coordinate, latitudinalMeters: 2000, longitudinalMeters: 2000)
             mapView.setRegion(region, animated: true)
         case .denied:
             print("Location services has been denied")
@@ -78,11 +79,59 @@ class ViewController: UIViewController {
         @unknown default:
             print("Unknown error. Unable to get location")
         }
+    }
+    
+    private func presentPlacesSheet(places: [PlaceAnnotation]) {
+        
+        guard let locationManager = locationManager,
+              let userLocation = locationManager.location
+        else {return}
+        
+        let placesView = PlacesTableViewController(userLocation: userLocation, places: places)
+        placesView.modalPresentationStyle = .pageSheet
+        
+        if let sheet = placesView.sheetPresentationController {
+            sheet.prefersGrabberVisible = true
+            sheet.detents = [.medium(), .large()]
+            present(placesView, animated: true)
+        }
+    }
+    
+    private func findNearByPlaces(by query: String) {
+        // clear all annotations
+        mapView.removeAnnotations(mapView.annotations)
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = query
+        request.region = mapView.region
+        
+        let search = MKLocalSearch(request: request)
+        search.start { [weak self] response, error in
+            guard let response = response, error == nil else {return }
+            
+         let places = response.mapItems.map(PlaceAnnotation.init)
+            places.forEach{ place in
+                self?.mapView.addAnnotation(place)
+            }
+            self?.presentPlacesSheet(places: places)
+        }
         
     }
-
-
+    
 }
+
+extension ViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        let text = textField.text ?? ""
+        if !text.isEmpty {
+            textField.resignFirstResponder()
+            // Find Nearby Places
+            findNearByPlaces(by: text)
+        }
+
+        return true
+    }
+}
+
 
 extension ViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {

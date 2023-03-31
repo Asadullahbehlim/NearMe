@@ -8,12 +8,13 @@ import Foundation
 import UIKit
 import MapKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, MKMapViewDelegate {
 
     var locationManager: CLLocationManager?
-    
+    private var places : [PlaceAnnotation] = []
     lazy var mapView: MKMapView = {
         let map = MKMapView()
+        map.delegate = self
        map.showsUserLocation = true
         map.translatesAutoresizingMaskIntoConstraints = false
         return map
@@ -97,6 +98,24 @@ class ViewController: UIViewController {
         }
     }
     
+    private func clearAllSelections() {
+        self.places = self.places.map { place in
+            place.isSelected = false
+            return place
+        }
+    }
+    
+    
+    func mapView(_ mapView: MKMapView, didSelect annotation: MKAnnotation) {
+        
+        // clear all selection
+        clearAllSelections()
+        guard let selectedAnnotaion = annotation as? PlaceAnnotation else { return }
+      let PlaceAnnotation = self.places.first(where: {$0.id==selectedAnnotaion.id})
+        PlaceAnnotation?.isSelected = true
+        presentPlacesSheet(places: self.places)
+    }
+    
     private func findNearByPlaces(by query: String) {
         // clear all annotations
         mapView.removeAnnotations(mapView.annotations)
@@ -106,13 +125,16 @@ class ViewController: UIViewController {
         
         let search = MKLocalSearch(request: request)
         search.start { [weak self] response, error in
-            guard let response = response, error == nil else {return }
+        guard let response = response, error == nil else {return }
             
-         let places = response.mapItems.map(PlaceAnnotation.init)
-            places.forEach{ place in
+            self?.places = response.mapItems.map(PlaceAnnotation.init)
+            self?.places.forEach{ place in
                 self?.mapView.addAnnotation(place)
             }
-            self?.presentPlacesSheet(places: places)
+            if let places = self?.places {
+                self?.presentPlacesSheet(places: places)
+
+            }
         }
         
     }

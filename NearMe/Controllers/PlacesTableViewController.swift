@@ -12,7 +12,7 @@ import CoreLocation
 class PlacesTableViewController: UITableViewController {
     
     var userLocation: CLLocation
-    let places: [PlaceAnnotation]
+    var places: [PlaceAnnotation]
     
     init(userLocation: CLLocation, places: [PlaceAnnotation]) {
         self.userLocation = userLocation
@@ -21,20 +21,36 @@ class PlacesTableViewController: UITableViewController {
         
         // register cell
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "PlaceCell")
+        self.places.swapAt(indexForSelectedRow ?? 0,0)
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         places.count
     }
+    private var indexForSelectedRow : Int? {
+        self.places.firstIndex(where: {$0.isSelected == true})
+    }
+    
+    
+    
+    private func calculateDistance(fromLocation: CLLocation, toLocation: CLLocation) -> CLLocationDistance {
+        fromLocation.distance(from: toLocation)
+    }
+    
+    private func formatDistanceForDisplay(_ distance: CLLocationDistance) -> String {
+        let meters = Measurement(value: distance, unit: UnitLength.meters)
+        return meters.converted(to: .kilometers).formatted()
+    }
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "PlaceCell", for: indexPath)
         let place = places[indexPath.row]
-      // cell config.
         var content = cell.defaultContentConfiguration()
         content.text = place.name
-        content.secondaryText = "ll"
+        content.secondaryText = formatDistanceForDisplay(calculateDistance(fromLocation: userLocation, toLocation: place.location))
         
         cell.contentConfiguration = content
+        cell.backgroundColor = place.isSelected ? UIColor.systemGreen : UIColor.clear
         return cell
     }
     

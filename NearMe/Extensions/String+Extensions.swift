@@ -12,10 +12,10 @@ extension String {
     
     var formatPhoneCall: String {
         self.replacingOccurrences(of: " ", with: "")
-        self.replacingOccurrences(of: "+", with: "")
-        self.replacingOccurrences(of: "(", with: "")
-        self.replacingOccurrences(of: ")", with: "")
-        self.replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: "+", with: "")
+            .replacingOccurrences(of: "(", with: "")
+            .replacingOccurrences(of: ")", with: "")
+            .replacingOccurrences(of: "-", with: "")
 
     }
 }

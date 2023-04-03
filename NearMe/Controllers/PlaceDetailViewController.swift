@@ -71,6 +71,12 @@ class PlaceDetailViewController: UIViewController {
         
     }
     
+    @objc func callButtonTapped(_ sender: UIButton) {
+        //place.phone = +(512)-400-5000
+        guard let url = URL(string: "tel://\(place.phone.formatPhoneCall)") else {return}
+        UIApplication.shared.open(url)
+    }
+    
     
     private func setupUI() {
         let stackView = UIStackView()
@@ -99,7 +105,7 @@ class PlaceDetailViewController: UIViewController {
         contactStackView.spacing = UIStackView.spacingUseSystem
         
         directionsButton.addTarget(self, action: #selector(directionsButtonTapped), for: .touchUpInside)
-        
+        callButton.addTarget(self, action: #selector(callButtonTapped), for: .touchUpInside)
         contactStackView.addArrangedSubview(directionsButton)
         contactStackView.addArrangedSubview(callButton)
         stackView.addArrangedSubview(contactStackView)
